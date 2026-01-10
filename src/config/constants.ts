@@ -17,13 +17,19 @@ export const GEEK_TOKEN = {
   symbol: 'GEEK',
   name: 'GEEK Protocol',
   decimals: 8,
-  contractAddress: 'kaspa:qz...', // Replace with actual GEEK token contract
+  contractAddress: 'krc20:geek', // KRC-20 uses ticker-based identification
 } as const;
 
-export const DEFAULT_NETWORK = NETWORKS.MAINNET;
+// Additional KRC-20 tokens that can be supported
+export const SUPPORTED_KRC20_TOKENS = [
+  GEEK_TOKEN,
+  // Add more tokens here as they become available
+] as const;
+
+export const DEFAULT_NETWORK = NETWORKS.TESTNET;
 
 // Development mode - set to false when connecting to real Kaspa node
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 export const STORAGE_KEYS = {
   WALLET: 'geek_wallet',

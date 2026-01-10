@@ -29,8 +29,8 @@ export function RestoreWallet() {
 
     try {
       await restoreWallet(mnemonic.trim(), password);
-    } catch (err: any) {
-      setError(err.message || 'Failed to restore wallet');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to restore wallet');
     }
   };
 

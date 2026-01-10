@@ -5,9 +5,9 @@ export class KaspaClient {
   private rpcUrl: string;
   private wsUrl: string;
   private ws: WebSocket | null = null;
-  private listeners: Map<string, Function[]> = new Map();
+  private listeners: Map<string, ((...args: unknown[]) => void)[]> = new Map();
   private requestId: number = 0;
-  private pendingRequests: Map<number, { resolve: Function; reject: Function }> = new Map();
+  private pendingRequests: Map<number, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = new Map();
   private connected: boolean = false;
   private demoMode: boolean = DEMO_MODE;
 
@@ -55,7 +55,7 @@ export class KaspaClient {
   /**
    * Subscribe to events
    */
-  on(event: string, callback: Function): void {
+  on(event: string, callback: (...args: unknown[]) => void): void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, []);
     }
@@ -65,7 +65,7 @@ export class KaspaClient {
   /**
    * Make HTTP RPC request
    */
-  private async httpRequest(method: string, params: any = {}): Promise<any> {
+  private async httpRequest(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     // In demo mode, return mock data
     if (this.demoMode) {
       return this.getMockResponse(method, params);
@@ -113,7 +113,7 @@ export class KaspaClient {
   /**
    * Get mock response for demo mode
    */
-  private getMockResponse(method: string, params: any): any {
+  private getMockResponse(method: string, params: Record<string, unknown>): unknown {
     const address = params?.address || '';
     
     switch (method) {
@@ -173,7 +173,7 @@ export class KaspaClient {
    */
   async getBalance(address: string): Promise<string> {
     try {
-      const result = await this.httpRequest('getBalanceByAddress', { address });
+      const result = await this.httpRequest('getBalanceByAddress', { address }) as { balance?: string };
       
       // Kaspa returns balance in sompi (1 KAS = 100,000,000 sompi)
       return result?.balance || '0';
@@ -191,7 +191,7 @@ export class KaspaClient {
       const result = await this.httpRequest('getTransactionsByAddress', { 
         address,
         limit: 50 
-      });
+      }) as { transactions?: Array<Record<string, unknown>> };
       
       return this.formatTransactions(result?.transactions || []);
     } catch (error) {
@@ -203,18 +203,18 @@ export class KaspaClient {
   /**
    * Format raw transactions to our Transaction type
    */
-  private formatTransactions(rawTxs: any[]): Transaction[] {
-    return rawTxs.map((tx: any) => ({
-      id: tx.transaction_id || tx.txId || Math.random().toString(),
-      type: tx.is_outgoing || tx.isOutgoing ? 'send' : 'receive',
-      amount: tx.amount || '0',
+  private formatTransactions(rawTxs: Array<Record<string, unknown>>): Transaction[] {
+    return rawTxs.map((tx: Record<string, unknown>): Transaction => ({
+      id: (tx.transaction_id as string) || (tx.txId as string) || Math.random().toString(),
+      type: (tx.is_outgoing || tx.isOutgoing) ? 'send' as const : 'receive' as const,
+      amount: (tx.amount as string) || '0',
       token: 'KAS',
-      from: tx.from || tx.inputs?.[0]?.address || '',
-      to: tx.to || tx.outputs?.[0]?.address || '',
-      timestamp: tx.block_time || tx.timestamp || Date.now(),
-      status: tx.is_accepted || tx.accepted ? 'confirmed' : 'pending',
-      confirmations: tx.confirmations || 0,
-      txHash: tx.transaction_id || tx.txId || '',
+      from: (tx.from as string) || ((tx.inputs as Array<{ address?: string }>)?.[0]?.address) || '',
+      to: (tx.to as string) || ((tx.outputs as Array<{ address?: string }>)?.[0]?.address) || '',
+      timestamp: (tx.block_time as number) || (tx.timestamp as number) || Date.now(),
+      status: (tx.is_accepted || tx.accepted) ? 'confirmed' as const : 'pending' as const,
+      confirmations: (tx.confirmations as number) || 0,
+      txHash: (tx.transaction_id as string) || (tx.txId as string) || '',
     }));
   }
 
@@ -225,7 +225,8 @@ export class KaspaClient {
     from: string,
     to: string,
     amount: string,
-    privateKey: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _privateKey: string
   ): Promise<string> {
     try {
       // Create and sign transaction
@@ -238,8 +239,8 @@ export class KaspaClient {
       // Submit signed transaction
       const result = await this.httpRequest('submitTransaction', {
         transaction: tx,
-        signature: await this.signTransaction(tx, privateKey),
-      });
+        signature: await this.signTransaction(),
+      }) as { txHash?: string; transactionId?: string };
 
       return result.txHash || result.transactionId || '';
     } catch (error) {
@@ -251,7 +252,7 @@ export class KaspaClient {
   /**
    * Sign transaction (placeholder)
    */
-  private async signTransaction(tx: any, privateKey: string): Promise<string> {
+  private async signTransaction(): Promise<string> {
     // This would use proper signing with secp256k1
     return 'signature_placeholder';
   }
@@ -259,12 +260,69 @@ export class KaspaClient {
   /**
    * Get network info
    */
-  async getNetworkInfo(): Promise<any> {
+  async getNetworkInfo(): Promise<Record<string, unknown> | null> {
     try {
-      return await this.httpRequest('getBlockDag');
+      return await this.httpRequest('getBlockDag') as Record<string, unknown>;
     } catch (error) {
       console.error('Failed to get network info:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get KRC-20 token balance
+   */
+  async getKRC20Balance(address: string, ticker: string): Promise<string> {
+    try {
+      // Query KRC-20 balance from UTXOs
+      const result = await this.httpRequest('getKRC20Balance', { 
+        address, 
+        ticker 
+      }) as { balance?: string };
+      
+      return result?.balance || '0';
+    } catch (error) {
+      console.error(`Failed to get KRC-20 ${ticker} balance:`, error);
+      // Return demo balance for testing
+      if (this.demoMode && ticker === 'GEEK') {
+        return '5000000000000'; // 50,000 GEEK (8 decimals)
+      }
+      return '0';
+    }
+  }
+
+  /**
+   * Send KRC-20 transaction
+   */
+  async sendKRC20Transaction(
+    from: string,
+    to: string,
+    krc20Data: Record<string, unknown>,
+    privateKey: string
+  ): Promise<string> {
+    try {
+      // Create transaction with KRC-20 data in OP_RETURN
+      const tx = await this.httpRequest('createKRC20Transaction', {
+        from,
+        to,
+        krc20Data: JSON.stringify(krc20Data),
+      });
+
+      // Sign and submit transaction
+      const result = await this.httpRequest('submitTransaction', {
+        transaction: tx,
+        signature: await this.signTransaction(),
+        privateKey,
+      }) as { txHash?: string; transactionId?: string };
+
+      return result.txHash || result.transactionId || '';
+    } catch (error) {
+      console.error('Failed to send KRC-20 transaction:', error);
+      // In demo mode, return mock tx hash
+      if (this.demoMode) {
+        return 'demo_krc20_tx_' + Math.random().toString(36).substr(2, 16);
+      }
+      throw error;
     }
   }
 

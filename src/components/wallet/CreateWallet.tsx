@@ -10,7 +10,6 @@ export function CreateWallet() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [mnemonic, setMnemonic] = useState('');
   const [step, setStep] = useState<'password' | 'mnemonic'>('password');
   
   const { createWallet, isLoading } = useWalletStore();
@@ -32,8 +31,8 @@ export function CreateWallet() {
       await createWallet(password);
       // In production, show the mnemonic to the user
       setStep('mnemonic');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create wallet');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create wallet');
     }
   };
 
@@ -64,7 +63,7 @@ export function CreateWallet() {
               Download Backup
             </Button>
             <Button className="flex-1">
-              I've Saved My Recovery Phrase
+              I&apos;ve Saved My Recovery Phrase
             </Button>
           </div>
         </div>
@@ -76,7 +75,7 @@ export function CreateWallet() {
     <Card title="Create New Wallet" className="max-w-md mx-auto">
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          Create a secure password to protect your wallet. You'll need this password every time you access your wallet.
+          Create a secure password to protect your wallet. You&apos;ll need this password every time you access your wallet.
         </p>
         
         <Input

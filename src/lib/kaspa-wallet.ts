@@ -65,7 +65,7 @@ export class KaspaWallet {
   /**
    * Convert public key to Kaspa address
    */
-  private static publicKeyToAddress(publicKey: Uint8Array): string {
+  private static publicKeyToAddress(publicKey: Uint8Array, isTestnet: boolean = true): string {
     // Kaspa address generation:
     // 1. RIPEMD160(SHA256(publicKey))
     // 2. Add version prefix
@@ -74,8 +74,8 @@ export class KaspaWallet {
     const sha256Hash = createHash('sha256').update(publicKey).digest();
     const ripemd160Hash = createHash('ripemd160').update(sha256Hash).digest();
     
-    // Add version byte (0x00 for mainnet P2PKH)
-    const version = Buffer.from([0x00]);
+    // Add version byte (0x00 for mainnet, 0x01 for testnet P2PKH)
+    const version = Buffer.from([isTestnet ? 0x01 : 0x00]);
     const payload = Buffer.concat([version, ripemd160Hash]);
     
     // Calculate checksum (first 4 bytes of double SHA256)
@@ -88,19 +88,23 @@ export class KaspaWallet {
     
     // Encode to Kaspa address format
     const addressHex = addressBytes.toString('hex');
-    return `kaspa:q${addressHex}`;
+    // Use testnet prefix for testnet addresses
+    const prefix = isTestnet ? 'kaspatest:q' : 'kaspa:q';
+    return `${prefix}${addressHex}`;
   }
 
   /**
    * Validate Kaspa address
    */
   static isValidAddress(address: string): boolean {
-    // Kaspa address format: kaspa:q[hex]
-    if (!address.startsWith('kaspa:q')) {
+    // Kaspa address format: kaspa:q[hex] or kaspatest:q[hex]
+    if (!address.startsWith('kaspa:q') && !address.startsWith('kaspatest:q')) {
       return false;
     }
     
-    const addressPart = address.slice(7); // Remove 'kaspa:q'
+    const addressPart = address.includes('kaspatest:') 
+      ? address.slice(11) // Remove 'kaspatest:q'
+      : address.slice(7);  // Remove 'kaspa:q'
     
     // Should be hex and reasonable length (50-100 chars typically)
     return /^[0-9a-f]{50,100}$/i.test(addressPart);
@@ -127,7 +131,7 @@ export class KaspaWallet {
    */
   static async signTransaction(
     privateKey: string,
-    txData: any
+    txData: Record<string, unknown>
   ): Promise<string> {
     // Sign transaction data
     const txString = JSON.stringify(txData);

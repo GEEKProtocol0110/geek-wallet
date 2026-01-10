@@ -4,7 +4,7 @@ import { KaspaClient } from '@/lib/kaspa-client';
 import { KRC20Handler } from '@/lib/krc20-handler';
 import { SecureStorage } from '@/lib/storage';
 import { DEFAULT_NETWORK, REFRESH_INTERVAL } from '@/config/constants';
-import type { Wallet, Transaction, KRC20Token, NetworkConfig, WalletState } from '@/types/wallet';
+import type { NetworkConfig, WalletState } from '@/types/wallet';
 
 interface WalletStore extends WalletState {
   // Actions
@@ -202,9 +202,11 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     if (!wallet || !kaspaClient || !krc20Handler) return;
     
     try {
-      const [kasBalance, geekBalance] = await Promise.all([
+      // Get KAS and all KRC-20 token balances
+      const [kasBalance, geekBalance, allTokens] = await Promise.all([
         kaspaClient.getBalance(wallet.address),
         krc20Handler.getGeekBalance(wallet.address),
+        krc20Handler.getAllTokenBalances(wallet.address),
       ]);
       
       set({
@@ -213,6 +215,7 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           balance: kasBalance,
           geekBalance,
         },
+        tokens: allTokens,
       });
     } catch (error) {
       console.error('Failed to refresh balance:', error);

@@ -1,11 +1,12 @@
 import { STORAGE_KEYS } from '@/config/constants';
 import { CryptoUtils } from './crypto';
+import type { Wallet } from '@/types/wallet';
 
 export class SecureStorage {
   /**
    * Save encrypted wallet data
    */
-  static saveWallet(walletData: any, password: string): void {
+  static saveWallet(walletData: Wallet, password: string): void {
     const encrypted = CryptoUtils.encrypt(JSON.stringify(walletData), password);
     localStorage.setItem(STORAGE_KEYS.ENCRYPTED_KEY, encrypted);
   }
@@ -13,7 +14,7 @@ export class SecureStorage {
   /**
    * Load and decrypt wallet data
    */
-  static loadWallet(password: string): any | null {
+  static loadWallet(password: string): Wallet | null {
     try {
       const encrypted = localStorage.getItem(STORAGE_KEYS.ENCRYPTED_KEY);
       if (!encrypted) return null;
@@ -44,14 +45,14 @@ export class SecureStorage {
   /**
    * Save settings
    */
-  static saveSettings(settings: any): void {
+  static saveSettings(settings: Record<string, unknown>): void {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   }
 
   /**
    * Load settings
    */
-  static loadSettings(): any {
+  static loadSettings(): Record<string, unknown> {
     const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     return settings ? JSON.parse(settings) : {};
   }

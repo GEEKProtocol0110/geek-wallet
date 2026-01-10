@@ -36,6 +36,7 @@ export function ReceiveTransaction() {
           
           {qrCode && (
             <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qrCode} alt="Wallet QR Code" className="w-64 h-64" />
             </div>
           )}

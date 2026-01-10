@@ -1,39 +1,94 @@
-import { GEEK_TOKEN } from '@/config/constants';
+import { GEEK_TOKEN, SUPPORTED_KRC20_TOKENS } from '@/config/constants';
 import { KaspaClient } from './kaspa-client';
 import type { KRC20Token } from '@/types/wallet';
 
 export class KRC20Handler {
   private client: KaspaClient;
+  private tokenBalancesCache: Map<string, Map<string, string>> = new Map();
 
   constructor(client: KaspaClient) {
     this.client = client;
   }
 
   /**
-   * Get GEEK token balance
+   * Get all supported KRC-20 tokens
    */
-  async getGeekBalance(address: string): Promise<string> {
-    return this.getTokenBalance(address, GEEK_TOKEN.contractAddress);
+  getSupportedTokens(): typeof SUPPORTED_KRC20_TOKENS {
+    return SUPPORTED_KRC20_TOKENS;
   }
 
   /**
-   * Get KRC-20 token balance
+   * Get GEEK token balance
    */
-  async getTokenBalance(address: string, contractAddress: string): Promise<string> {
+  async getGeekBalance(address: string): Promise<string> {
+    return this.getTokenBalance(address, GEEK_TOKEN.symbol);
+  }
+
+  /**
+   * Get KRC-20 token balance by ticker symbol
+   */
+  async getTokenBalance(address: string, ticker: string): Promise<string> {
     try {
-      // In demo mode, return mock GEEK balance
-      // In production, this would query the KRC-20 token contract
-      
-      // For GEEK token, return demo balance: 50,000 GEEK
-      if (contractAddress === GEEK_TOKEN.contractAddress) {
-        return '5000000000000'; // 50,000 GEEK (with 8 decimals)
+      // Check cache first
+      const cached = this.tokenBalancesCache.get(address)?.get(ticker);
+      if (cached !== undefined) {
+        return cached;
       }
+
+      // Query KRC-20 balance from Kaspa network
+      // KRC-20 tokens are tracked through UTXO commitment data
+      const balance = await this.queryKRC20Balance(address, ticker);
       
-      return '0';
+      // Update cache
+      if (!this.tokenBalancesCache.has(address)) {
+        this.tokenBalancesCache.set(address, new Map());
+      }
+      this.tokenBalancesCache.get(address)!.set(ticker, balance);
+      
+      return balance;
     } catch (error) {
-      console.error('Failed to get token balance:', error);
+      console.error(`Failed to get ${ticker} balance:`, error);
       return '0';
     }
+  }
+
+  /**
+   * Query KRC-20 balance from the network
+   */
+  private async queryKRC20Balance(address: string, ticker: string): Promise<string> {
+    try {
+      // KRC-20 uses JSON in OP_RETURN outputs
+      // Query transactions and parse KRC-20 data
+      const result = await this.client.getKRC20Balance(address, ticker);
+      return result || '0';
+    } catch (error) {
+      console.error('KRC-20 balance query failed:', error);
+      return '0';
+    }
+  }
+
+  /**
+   * Get all token balances for an address
+   */
+  async getAllTokenBalances(address: string): Promise<KRC20Token[]> {
+    const tokens: KRC20Token[] = [];
+    
+    for (const token of SUPPORTED_KRC20_TOKENS) {
+      const balance = await this.getTokenBalance(address, token.symbol);
+      tokens.push({
+        ...token,
+        balance,
+      });
+    }
+    
+    return tokens;
+  }
+
+  /**
+   * Clear balance cache
+   */
+  clearCache(): void {
+    this.tokenBalancesCache.clear();
   }
 
   /**
@@ -49,30 +104,34 @@ export class KRC20Handler {
       from,
       to,
       amount,
-      GEEK_TOKEN.contractAddress,
+      GEEK_TOKEN.symbol,
       privateKey
     );
   }
 
   /**
-   * Transfer KRC-20 tokens
+   * Transfer KRC-20 tokens by ticker
    */
   async transferToken(
     from: string,
     to: string,
     amount: string,
-    contractAddress: string,
+    ticker: string,
     privateKey: string
   ): Promise<string> {
     try {
-      // Create KRC-20 transfer transaction
-      // KRC-20 embeds token data in Kaspa transactions
-      const txData = this.createKRC20Transfer(from, to, amount, contractAddress);
+      // Create KRC-20 transfer data
+      const krc20Data = this.createKRC20Transfer(from, to, amount, ticker);
       
-      // Send through Kaspa network
-      return await this.client.sendTransaction(from, to, '0', privateKey);
+      // Send through Kaspa network with KRC-20 metadata
+      return await this.client.sendKRC20Transaction(
+        from,
+        to,
+        krc20Data,
+        privateKey
+      );
     } catch (error) {
-      console.error('Failed to transfer token:', error);
+      console.error(`Failed to transfer ${ticker}:`, error);
       throw error;
     }
   }
@@ -84,14 +143,15 @@ export class KRC20Handler {
     from: string,
     to: string,
     amount: string,
-    contractAddress: string
-  ): any {
-    // KRC-20 format: embed token metadata in OP_RETURN or similar
+    ticker: string
+  ): Record<string, unknown> {
+    // KRC-20 format: embed token metadata in OP_RETURN
+    // Format follows KRC-20 specification
     return {
-      protocol: 'krc-20',
-      operation: 'transfer',
-      tick: GEEK_TOKEN.symbol,
-      amount,
+      p: 'krc-20',
+      op: 'transfer',
+      tick: ticker,
+      amt: amount,
       from,
       to,
     };
@@ -115,11 +175,11 @@ export class KRC20Handler {
   /**
    * Parse KRC-20 transactions
    */
-  parseKRC20Transaction(txData: any): any {
+  parseKRC20Transaction(txData: Record<string, unknown>): Record<string, unknown> | null {
     // Parse KRC-20 metadata from transaction
     try {
       // KRC-20 tokens use JSON in OP_RETURN or similar
-      const metadata = JSON.parse(txData.metadata || '{}');
+      const metadata = JSON.parse((txData.metadata as string) || '{}');
       return metadata;
     } catch {
       return null;
