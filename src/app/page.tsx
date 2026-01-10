@@ -11,6 +11,7 @@ import { SendTransaction } from '@/components/wallet/SendTransaction';
 import { ReceiveTransaction } from '@/components/wallet/ReceiveTransaction';
 import { TransactionHistory } from '@/components/wallet/TransactionHistory';
 import { Button } from '@/components/ui/Button';
+import { DEMO_MODE } from '@/config/constants';
 
 type View = 'dashboard' | 'send' | 'receive' | 'history';
 
@@ -99,6 +100,11 @@ export default function Home() {
             </div>
 
             <div className="flex items-center space-x-2">
+              {DEMO_MODE && (
+                <div className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                  Demo Mode
+                </div>
+              )}
               <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                 Connected
               </div>

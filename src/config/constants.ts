@@ -22,6 +22,9 @@ export const GEEK_TOKEN = {
 
 export const DEFAULT_NETWORK = NETWORKS.MAINNET;
 
+// Development mode - set to false when connecting to real Kaspa node
+export const DEMO_MODE = true;
+
 export const STORAGE_KEYS = {
   WALLET: 'geek_wallet',
   ENCRYPTED_KEY: 'geek_wallet_encrypted',

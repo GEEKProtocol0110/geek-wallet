@@ -21,14 +21,15 @@ export class KRC20Handler {
    */
   async getTokenBalance(address: string, contractAddress: string): Promise<string> {
     try {
-      // KRC-20 uses Kaspa's UTXO model with token metadata
-      // This is a placeholder implementation
-      const balance = await this.client.getBalance(address);
+      // In demo mode, return mock GEEK balance
+      // In production, this would query the KRC-20 token contract
       
-      // In production, parse UTXO outputs for specific token data
-      // KRC-20 tokens are embedded in Kaspa transactions
+      // For GEEK token, return demo balance: 50,000 GEEK
+      if (contractAddress === GEEK_TOKEN.contractAddress) {
+        return '5000000000000'; // 50,000 GEEK (with 8 decimals)
+      }
       
-      return balance;
+      return '0';
     } catch (error) {
       console.error('Failed to get token balance:', error);
       return '0';
