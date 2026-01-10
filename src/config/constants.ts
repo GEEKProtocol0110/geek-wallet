@@ -1,13 +1,13 @@
 export const NETWORKS = {
   MAINNET: {
     name: 'Kaspa Mainnet',
-    rpcUrl: 'wss://api.kaspa.org',
+    rpcUrl: 'https://api.kaspa.org',
     explorerUrl: 'https://explorer.kaspa.org',
     chainId: 'kaspa-mainnet',
   },
   TESTNET: {
     name: 'Kaspa Testnet',
-    rpcUrl: 'wss://api-tn10.kaspa.org',
+    rpcUrl: 'https://api-tn10.kaspa.org',
     explorerUrl: 'https://explorer-tn10.kaspa.org',
     chainId: 'kaspa-testnet-10',
   },
