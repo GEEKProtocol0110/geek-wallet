@@ -1,9 +1,10 @@
 import * as bip39 from 'bip39';
 import CryptoJS from 'crypto-js';
+import { generateWalletFromMnemonic, getAddressFromPrivateKey, type KaspaKeyPair } from './kaspa-sdk';
 
 export class CryptoUtils {
   /**
-   * Generate a new mnemonic phrase
+   * Generate a new mnemonic phrase (24 words for Kaspa)
    */
   static generateMnemonic(): string {
     return bip39.generateMnemonic(256); // 24 words for maximum security
@@ -14,6 +15,20 @@ export class CryptoUtils {
    */
   static validateMnemonic(mnemonic: string): boolean {
     return bip39.validateMnemonic(mnemonic);
+  }
+
+  /**
+   * Generate Kaspa wallet from mnemonic using official SDK
+   */
+  static async generateKaspaWallet(mnemonic: string): Promise<KaspaKeyPair> {
+    return await generateWalletFromMnemonic(mnemonic);
+  }
+
+  /**
+   * Get Kaspa address from private key
+   */
+  static async getKaspaAddress(privateKey: string): Promise<string> {
+    return await getAddressFromPrivateKey(privateKey);
   }
 
   /**

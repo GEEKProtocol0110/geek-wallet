@@ -21,6 +21,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
+  const [showCreateNew, setShowCreateNew] = useState(false);
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const { wallet, unlockWallet } = useWalletStore();
 
@@ -48,12 +49,12 @@ export default function Home() {
   }
 
   // Wallet exists but locked
-  if (hasWallet && !wallet) {
-    return <UnlockWallet onUnlock={handleUnlock} />;
+  if (hasWallet && !wallet && !showCreateNew) {
+    return <UnlockWallet onUnlock={handleUnlock} onCreateNew={() => setShowCreateNew(true)} />;
   }
 
-  // No wallet - show setup
-  if (!hasWallet) {
+  // No wallet - show setup (or creating new wallet from unlock screen)
+  if (!hasWallet || showCreateNew) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/20 p-4">
         <div className="max-w-6xl mx-auto py-12">

@@ -5,6 +5,7 @@ import { useWalletStore } from '@/store/wallet-store';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Logo } from '../ui/Logo';
+import { KaspaPriceChart } from './KaspaPriceChart';
 import { formatAmount, formatAddress, copyToClipboard } from '@/lib/utils';
 import { DEMO_MODE } from '@/config/constants';
 
@@ -20,6 +21,9 @@ export function WalletDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Kaspa Price Chart */}
+      <KaspaPriceChart />
+
       {/* Network Status */}
       <div className={`border-l-4 p-4 rounded ${
         isConnected 

@@ -7,7 +7,13 @@ import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
 import { ThemeToggle } from '../theme/ThemeToggle';
 
-export function UnlockWallet({ onUnlock }: { onUnlock: (password: string) => void }) {
+export function UnlockWallet({ 
+  onUnlock, 
+  onCreateNew 
+}: { 
+  onUnlock: (password: string) => void;
+  onCreateNew?: () => void;
+}) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +72,17 @@ export function UnlockWallet({ onUnlock }: { onUnlock: (password: string) => voi
           >
             Unlock Wallet
           </Button>
+
+          {onCreateNew && (
+            <div className="text-center">
+              <button
+                onClick={onCreateNew}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Create a new wallet instead
+              </button>
+            </div>
+          )}
         </div>
       </Card>
     </div>
