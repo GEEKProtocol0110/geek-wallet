@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "patch-package || true"
+    "postinstall": "node -e \"console.log('Skipping patch-package')\""
   },
   "dependencies": {
     "@kaspa/core-lib": "^1.6.5",
