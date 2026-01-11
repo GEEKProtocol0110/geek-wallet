@@ -17,7 +17,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   // Initialize theme after mount to avoid hydration mismatch
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     
     // Check localStorage or system preference
@@ -26,40 +25,35 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const initialTheme = storedTheme || systemTheme;
     
     setTheme(initialTheme);
-    
-    // Apply theme to DOM
-    if (initialTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, []);
 
+  // Apply theme changes to DOM
   useEffect(() => {
-    // Sync the DOM class with theme changes
     if (!mounted) return;
     
+    console.log('ThemeProvider: Applying theme:', theme);
+    const root = document.documentElement;
+    
     if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
+      console.log('ThemeProvider: Added dark class');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
+      console.log('ThemeProvider: Removed dark class');
     }
+    
+    // Save to localStorage
+    localStorage.setItem('geek-wallet-theme', theme);
+    console.log('ThemeProvider: Saved to localStorage:', theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    console.log('Toggling theme from', theme, 'to', newTheme);
-    setTheme(newTheme);
-    localStorage.setItem('geek-wallet-theme', newTheme);
-    
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      console.log('Added dark class');
-    } else {
-      document.documentElement.classList.remove('dark');
-      console.log('Removed dark class');
-    }
-    console.log('Current classes:', document.documentElement.className);
+    console.log('ThemeProvider: toggleTheme called, current theme:', theme);
+    setTheme(prevTheme => {
+      const newTheme = prevTheme === 'light' ? 'dark' : 'light';
+      console.log('ThemeProvider: Setting new theme:', newTheme);
+      return newTheme;
+    });
   };
 
   return (
