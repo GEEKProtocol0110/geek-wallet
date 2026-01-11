@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "patch-package || true"
   },
   "dependencies": {
     "@kaspa/core-lib": "^1.6.5",
