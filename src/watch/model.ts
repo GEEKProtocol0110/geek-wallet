@@ -43,7 +43,7 @@ export async function loadPortfolio(raw:unknown,fetcher:typeof fetch=fetch):Prom
  }
  const [kas,geek,activity]=await Promise.all([
   read(`https://api.kaspa.org/addresses/${escaped}/balance`,v=>parseKas(v,address)),
-  read(`https://api.kasplex.org/v1/krc20/address/${escaped}/tokenlist?tick=GEEK`,parseGeek),
+  read(`https://api.kasplex.org/v1/krc20/address/${address}/tokenlist?tick=GEEK`,parseGeek),
   read(`https://api.kaspa.org/addresses/${escaped}/full-transactions?limit=20&offset=0&resolve_previous_outpoints=no`,parseActivity)
  ]);
  return {address,network:'mainnet',kas,geek,activity};
