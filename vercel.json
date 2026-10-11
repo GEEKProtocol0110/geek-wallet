@@ -1,5 +1,1 @@
-{
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps --ignore-scripts"
-}
+{"framework":"nextjs","buildCommand":"npm run build","installCommand":"npm ci --ignore-scripts"}
