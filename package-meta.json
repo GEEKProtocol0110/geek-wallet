@@ -1,7 +1,7 @@
 {
   "name": "geek-wallet",
-  "version": "1.0.0",
-  "description": "Production-ready wallet for GEEK Protocol (KRC-20) on Kaspa",
+  "version": "0.1.0",
+  "description": "Public Alpha Kaspa Mainnet public-address portfolio companion",
   "author": "GEEK Protocol",
   "license": "MIT",
   "keywords": [
@@ -16,6 +16,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint"
   }
 }

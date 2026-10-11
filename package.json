@@ -7,42 +7,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "node -e \"console.log('Skipping patch-package')\""
+    "test": "node --test tests/*.test.cjs",
+    "verify": "npm test && npm run lint && tsc --noEmit && npm run build"
   },
   "dependencies": {
-    "@kaspa/core-lib": "^1.6.5",
-    "@kaspa/wallet": "^1.4.27",
-    "@okxweb3/coin-kaspa": "^2.4.9",
-    "@scure/bip32": "^2.0.1",
-    "@scure/bip39": "^2.0.1",
-    "bip32": "^5.0.0",
-    "bip39": "^3.1.0",
-    "chart.js": "^4.5.1",
-    "clsx": "^2.1.1",
-    "crypto-js": "^4.2.0",
-    "kaspa": "^0.13.0",
-    "kaspa-wasm": "^0.13.0",
-    "next": "16.1.1",
-    "patch-package": "^8.0.1",
-    "qrcode": "^1.5.4",
+    "@dfns/kaspa-wasm": "0.14.1",
+    "next": "16.4.0",
     "react": "19.2.3",
-    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.3",
-    "secp256k1": "^5.0.1",
-    "tailwind-merge": "^3.4.0",
-    "zustand": "^5.0.9"
+    "qrcode": "1.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/secp256k1": "^4.0.7",
-    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

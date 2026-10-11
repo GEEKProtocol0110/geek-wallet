@@ -1,212 +1,35 @@
 'use client';
-
-import { useState, useEffect } from 'react';
-import { SecureStorage } from '@/lib/storage';
-import { useWalletStore } from '@/store/wallet-store';
-import { CreateWallet } from '@/components/wallet/CreateWallet';
-import { RestoreWallet } from '@/components/wallet/RestoreWallet';
-import { UnlockWallet } from '@/components/wallet/UnlockWallet';
-import { WalletDashboard } from '@/components/wallet/WalletDashboard';
-import { SendTransaction } from '@/components/wallet/SendTransaction';
-import { ReceiveTransaction } from '@/components/wallet/ReceiveTransaction';
-import { TransactionHistory } from '@/components/wallet/TransactionHistory';
-import { Button } from '@/components/ui/Button';
-import { Logo } from '@/components/ui/Logo';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { DEMO_MODE } from '@/config/constants';
-
-type View = 'dashboard' | 'send' | 'receive' | 'history';
-
-export default function Home() {
-  const [mounted, setMounted] = useState(false);
-  const [hasWallet, setHasWallet] = useState(false);
-  const [showRestore, setShowRestore] = useState(false);
-  const [showCreateNew, setShowCreateNew] = useState(false);
-  const [currentView, setCurrentView] = useState<View>('dashboard');
-  const { wallet, unlockWallet } = useWalletStore();
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-    setHasWallet(SecureStorage.hasWallet());
-  }, []);
-
-  const handleUnlock = async (password: string) => {
-    try {
-      await unlockWallet(password);
-    } catch (error) {
-      console.error('Failed to unlock wallet:', error);
-    }
-  };
-
-  // Show loading state until mounted to avoid hydration mismatch
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Wallet exists but locked
-  if (hasWallet && !wallet && !showCreateNew) {
-    return <UnlockWallet onUnlock={handleUnlock} onCreateNew={() => setShowCreateNew(true)} />;
-  }
-
-  // No wallet - show setup (or creating new wallet from unlock screen)
-  if (!hasWallet || showCreateNew) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900/20 p-4">
-        <div className="max-w-6xl mx-auto py-12">
-          <div className="absolute top-4 right-4">
-            <ThemeToggle />
-          </div>
-          
-          <div className="text-center mb-12">
-            <Logo size="large" className="mx-auto mb-6" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-3">
-              Welcome to GEEK Wallet
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              Your secure gateway to GEEK Protocol on Kaspa
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-full shadow-lg backdrop-blur-sm">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Testnet Active</span>
-            </div>
-          </div>
-
-          <div className="mb-8 flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-            <Button
-              variant={!showRestore ? 'primary' : 'outline'}
-              onClick={() => setShowRestore(false)}
-              className="flex-1 py-4 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create New Wallet
-            </Button>
-            <Button
-              variant={showRestore ? 'primary' : 'outline'}
-              onClick={() => setShowRestore(true)}
-              className="flex-1 py-4 text-base font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              <svg className="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Restore Existing Wallet
-            </Button>
-          </div>
-
-          {showRestore ? <RestoreWallet /> : <CreateWallet />}
-        </div>
-      </div>
-    );
-  }
-
-  // Wallet unlocked - show app
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50/30 dark:from-gray-900 dark:to-gray-800">
-      {/* Header - Kasware Style */}
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-200/50 dark:border-gray-700 sticky top-0 z-10 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Logo size="small" />
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  GEEK Wallet
-                </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Powered by Kaspa</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <ThemeToggle />
-              {DEMO_MODE && (
-                <div className="px-3 py-1.5 bg-gradient-to-r from-yellow-100 to-yellow-200 dark:from-yellow-900/50 dark:to-yellow-800/50 text-yellow-800 dark:text-yellow-200 rounded-lg text-xs font-bold shadow-md">
-                  ⚠️ Demo
-                </div>
-              )}
-              <div className="px-3 py-1.5 bg-gradient-to-r from-green-100 to-green-200 dark:from-green-900/50 dark:to-green-800/50 text-green-800 dark:text-green-200 rounded-lg text-xs font-bold shadow-md flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Connected
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation - Kasware Style Tabs */}
-      <nav className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex space-x-2">
-            {[
-              { id: 'dashboard', label: 'Portfolio', icon: '💼' },
-              { id: 'send', label: 'Send', icon: '📤' },
-              { id: 'receive', label: 'Receive', icon: '📥' },
-              { id: 'history', label: 'Activity', icon: '📊' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id as View)}
-                className={`px-6 py-3 border-b-3 transition-all font-medium rounded-t-lg ${
-                  currentView === item.id
-                    ? 'border-purple-600 bg-gradient-to-t from-purple-50 to-transparent dark:from-purple-900/20 dark:to-transparent text-purple-600 dark:text-purple-400 shadow-lg'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-gray-700/50'
-                }`}
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {currentView === 'dashboard' && (
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <WalletDashboard />
-            </div>
-            <div className="space-y-6">
-              <TransactionHistory />
-            </div>
-          </div>
-        )}
-        
-        {currentView === 'send' && (
-          <div className="max-w-2xl mx-auto">
-            <SendTransaction />
-          </div>
-        )}
-        
-        {currentView === 'receive' && (
-          <div className="max-w-2xl mx-auto">
-            <ReceiveTransaction />
-          </div>
-        )}
-        
-        {currentView === 'history' && (
-          <div className="max-w-4xl mx-auto">
-            <TransactionHistory />
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-t border-purple-200/50 dark:border-gray-700 mt-12 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-            <p className="font-semibold">GEEK Wallet v1.0.0</p>
-            <p className="mt-1">Built for <span className="font-bold text-purple-600 dark:text-purple-400">GEEK Protocol</span> on Kaspa BlockDAG</p>
-            <p className="mt-2 text-xs">🚀 Fastest blockchain technology • 🔒 Secure & Open Source</p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
+import {useEffect,useRef,useState} from 'react';
+import Image from 'next/image';
+import QRCode from 'qrcode';
+import {displayUnits} from '@/watch/amounts';
+import type {Portfolio} from '@/watch/model';
+type SavedAddress={address:string;name:string};
+const savedKey='geek_watch_addresses_v1';
+export default function Home(){
+ const [address,setAddress]=useState(''),[name,setName]=useState(''),[remember,setRemember]=useState(false);
+ const [saved,setSaved]=useState<SavedAddress[]>([]),[portfolio,setPortfolio]=useState<Portfolio|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[qr,setQr]=useState('');
+ const request=useRef<AbortController|null>(null),sequence=useRef(0);
+ useEffect(()=>{const timer=setTimeout(()=>{try{const v=JSON.parse(localStorage.getItem(savedKey)||'[]');if(Array.isArray(v))setSaved(v.filter(r=>r&&typeof r.address==='string'&&/^kaspa:[a-z0-9]{50,100}$/.test(r.address)&&typeof r.name==='string'&&r.name.length<=30).slice(0,6));}catch{}},0);return()=>{clearTimeout(timer);request.current?.abort();};},[]);
+ useEffect(()=>{let live=true;const timer=setTimeout(()=>{setQr('');if(portfolio)void QRCode.toDataURL(portfolio.address,{width:232,margin:2,errorCorrectionLevel:'M'}).then(url=>{if(live)setQr(url);}).catch(()=>{});},0);return()=>{live=false;clearTimeout(timer);};},[portfolio]);
+ function keep(list:SavedAddress[]){setSaved(list);try{localStorage.setItem(savedKey,JSON.stringify(list));return true;}catch{setMessage('Tracking works for this visit, but this browser could not save the address list.');return false;}}
+ async function track(raw=address,saveAddress=remember){
+  request.current?.abort();const control=new AbortController();request.current=control;const run=++sequence.current;const timer=setTimeout(()=>control.abort(),15000);
+  setBusy(true);setMessage('');setPortfolio(null);
+  try{
+   const r=await fetch(`/api/portfolio?address=${encodeURIComponent(raw.trim())}`,{cache:'no-store',signal:control.signal});const body=await r.json();if(!r.ok)throw new Error(body.error||'Address lookup unavailable.');if(sequence.current!==run)return;
+   const data=body as Portfolio;setPortfolio(data);setAddress(data.address);
+   if(saveAddress){const list=saved.filter(s=>s.address!==data.address);if(list.length>=6)setMessage('Six addresses are already saved. Remove one from the saved list to remember another.');else keep([...list,{address:data.address,name:name.trim().slice(0,30)||'Tracked address'}]);}
+  }catch(error){if(sequence.current===run)setMessage(control.signal.aborted?'Lookup timed out. Try again when you are ready.':(error as Error).message);}
+  finally{clearTimeout(timer);if(sequence.current===run)setBusy(false);}
+ }
+ async function copy(){if(!portfolio)return;try{await navigator.clipboard.writeText(portfolio.address);setMessage('Public address copied.');}catch{setMessage('Copy unavailable. Select the public address below.');}}
+ return <><header className="header"><a className="brand" href="https://www.geekprotocol.xyz/">GEEK<span>{'// WALLET'}</span></a><nav aria-label="Main navigation"><a href="https://www.geekprotocol.xyz/study/">Learn</a><a href="https://www.geekprotocol.xyz/mint/">Mint GEEK</a><a href="https://www.geekprotocol.xyz/">HQ ↗</a></nav></header><main>
+ <section className="hero"><span className="eyebrow">KASPA MAINNET · PUBLIC-ADDRESS TRACKING</span><h1>Your address.<br/><em>A clearer view.</em></h1><p>Track KAS and GEEK, check recent activity, and show a receiving QR. Your existing wallet stays in charge.</p><div className="pill">Portfolio companion · No keys or signing</div></section>
+ <section className="panel lookup" aria-labelledby="track-title"><h2 id="track-title">Track a public address</h2><p>Paste a Mainnet receiving address. Looking it up sends that public address to the Kaspa REST service and Kasplex indexer. A single address may represent only part of a wallet with multiple receiving or change addresses.</p><form onSubmit={e=>{e.preventDefault();void track();}}><label>Public Kaspa address<input value={address} onChange={e=>setAddress(e.target.value)} placeholder="kaspa:…" maxLength={120} autoComplete="off" spellCheck={false} required /></label><div className="form-row"><label>Local nickname <span>(optional)</span><input value={name} onChange={e=>setName(e.target.value)} maxLength={30} autoComplete="off" placeholder="My Kaspa address" /></label><button disabled={busy||!address.trim()}>{busy?'Reading sources…':'View portfolio →'}</button></div><label className="check"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}/>Remember this address on this device</label></form><p role="status" aria-live="polite" className="status">{message}</p>
+ {saved.length>0&&<div className="saved"><h3>Saved on this device</h3>{saved.map(item=><div key={item.address}><button type="button" disabled={busy} onClick={()=>{setRemember(false);setName(item.name);void track(item.address,false);}}>{item.name}<small>{item.address.slice(0,15)}…{item.address.slice(-8)}</small></button><button type="button" className="quiet" onClick={()=>keep(saved.filter(v=>v.address!==item.address))} aria-label={`Forget ${item.name}`}>Forget</button></div>)}</div>}</section>
+ {portfolio&&<><section className="balances" aria-label="Address balances"><article className="panel balance"><span className="eyebrow">NATIVE COIN</span><h2>KAS</h2><strong>{portfolio.kas.status==='available'?displayUnits(portfolio.kas.value):'Unavailable'}</strong><p>{portfolio.kas.status==='available'?`Read ${new Date(portfolio.kas.checkedAt).toLocaleTimeString()} · Kaspa REST`:'The native balance source could not be read. This is not a zero-balance result.'}</p></article><article className="panel balance"><span className="eyebrow">KRC-20 TOKEN</span><h2>GEEK</h2><strong>{portfolio.geek.status==='available'?displayUnits(portfolio.geek.value.available):'Unavailable'}</strong><p>{portfolio.geek.status==='available'?`${displayUnits(portfolio.geek.value.locked)} GEEK locked · Read ${new Date(portfolio.geek.checkedAt).toLocaleTimeString()} · Kasplex`:'The token indexer could not be read. Native KAS and token balances use different sources.'}</p></article></section>
+ <div className="portfolio-grid"><section className="panel" aria-labelledby="activity-title"><div className="section-head"><h2 id="activity-title">Recent native activity</h2><button type="button" className="quiet" disabled={busy} onClick={()=>void track(portfolio.address,false)}>Refresh</button></div><p>Up to 20 recent native transactions involving this address. Token operations are not inferred from this list.</p>{portfolio.activity.status==='unavailable'?<p role="status">Activity unavailable. Open the explorer to check independently.</p>:portfolio.activity.value.length===0?<p>No transactions returned for this address.</p>:<ul className="activity">{portfolio.activity.value.map(tx=><li key={tx.id}><a href={`https://explorer.kaspa.org/txs/${tx.id}`} target="_blank" rel="noopener noreferrer">{tx.id.slice(0,12)}…{tx.id.slice(-8)} ↗</a><span>{tx.accepted===true?'Accepted':tx.accepted===false?'Not accepted':'Acceptance not reported'}{tx.time?` · ${new Date(tx.time).toLocaleString()}`:''}</span></li>)}</ul>}<a className="text-link" href={`https://explorer.kaspa.org/addresses/${encodeURIComponent(portfolio.address)}`} target="_blank" rel="noopener noreferrer">Open this address in the explorer ↗</a></section>
+ <section className="panel receive" aria-labelledby="receive-title"><span className="eyebrow">RECEIVING ADDRESS</span><h2 id="receive-title">Show the destination.</h2>{qr&&<Image unoptimized src={qr} alt="QR code containing the tracked public Kaspa address" width={232} height={232}/>}<label>Public address<textarea readOnly value={portfolio.address} onFocus={e=>e.currentTarget.select()}/></label><button type="button" onClick={copy}>Copy public address</button><p>Tracking an address does not prove ownership. Verify it in your own wallet before someone sends funds.</p></section></div></>}
+ <section className="next"><h2>Keep exploring.</h2><a href="https://www.geekprotocol.xyz/study/?topic=wallets&level=foundations">Understand wallets & change ↗</a><a href="https://www.geekprotocol.xyz/mint/">Mint GEEK with Kasware ↗</a></section></main><footer>GEEK Wallet · Public Alpha portfolio companion. Earlier experimental wallet code is retained for development; it is not part of this public experience.</footer></>;
 }
