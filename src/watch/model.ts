@@ -2,9 +2,14 @@ import kaspa from '@dfns/kaspa-wasm';
 import {baseUnits} from './amounts';
 import {nativeDetails} from './activity';
 import type {Activity} from './activity';
+import {readSource} from './provider';
+import type {Reading} from './provider';
+import {parseTokenPage,tokenCursor} from './tokens';
+import type {TokenPage} from './tokens';
+import {readCovenants} from './covenants';
+export type {Reading} from './provider';
 export type {Activity} from './activity';
 export {baseUnits,displayUnits} from './amounts';
-export type Reading<T> = {status:'available';value:T;source:string;checkedAt:number} | {status:'unavailable';value:null;source:string;checkedAt:number};
 export type Portfolio = {address:string;network:'mainnet';kas:Reading<string>;geek:Reading<{available:string;locked:string}>;activity:Reading<Activity[]>};
 export function normalizeAddress(raw: unknown): string {
  if(typeof raw!=='string' || raw.length>120) throw new Error('Enter a valid Kaspa Mainnet public address.');
@@ -36,18 +41,15 @@ export function parseActivity(value:unknown,address:string):Activity[] {
  const time=typeof v.block_time==='number'&&Number.isSafeInteger(v.block_time)&&v.block_time>0&&v.block_time<=8640000000000000?v.block_time:null;
  return {id:v.transaction_id.toLowerCase(),accepted:typeof v.is_accepted==='boolean'?v.is_accepted:null,time,details:nativeDetails(v,address,normalizeAddress)};});
 }
-const json = async(url:string,fetcher:typeof fetch,signal:AbortSignal) => {
- const r=await fetcher(url,{headers:{Accept:'application/json'},cache:'no-store',signal});if(!r.ok)throw new Error('Source unavailable');
- const length=Number(r.headers.get('content-length'));if(length>1000000)throw new Error('Response too large');
- const raw=await r.text();if(raw.length>1000000)throw new Error('Response too large');return JSON.parse(raw) as unknown;
-};
+export async function loadTokens(raw:unknown,cursorValue:unknown=null,fetcher:typeof fetch=fetch):Promise<Reading<TokenPage>>{
+ const address=normalizeAddress(raw),cursor=tokenCursor(cursorValue);
+ const source=`https://api.kasplex.org/v1/krc20/address/${address}/tokenlist${cursor?`?next=${encodeURIComponent(cursor)}`:''}`;
+ return readSource(source,value=>{const page=parseTokenPage(value);if(cursor&&page.next===cursor)throw new Error('Repeated token cursor');return page;},fetcher);
+}
+export async function loadCovenants(raw:unknown,fetcher:typeof fetch=fetch){return readCovenants(normalizeAddress(raw),fetcher);}
 export async function loadPortfolio(raw:unknown,fetcher:typeof fetch=fetch):Promise<Portfolio> {
  const address=normalizeAddress(raw);const escaped=encodeURIComponent(address);
- async function read<T>(source:string,parse:(v:unknown)=>T):Promise<Reading<T>> {
-  const control=new AbortController();const timer=setTimeout(()=>control.abort(),10000);
-  try {return {status:'available',value:parse(await json(source,fetcher,control.signal)),source,checkedAt:Date.now()};}
-  catch{return {status:'unavailable',value:null,source,checkedAt:Date.now()};}finally{clearTimeout(timer);}
- }
+ const read=<T>(source:string,parse:(v:unknown)=>T)=>readSource(source,parse,fetcher);
  const [kas,geek,activity]=await Promise.all([
   read(`https://api.kaspa.org/addresses/${escaped}/balance`,v=>parseKas(v,address)),
   read(`https://api.kasplex.org/v1/krc20/address/${address}/token/GEEK`,parseGeek),

@@ -1,14 +1,24 @@
 # GEEK Wallet
 
-Public Alpha **portfolio companion** for a Kaspa Mainnet public address. [GEEK HQ](https://www.geekprotocol.xyz/) is the main ecosystem product.
+**Kaspa first. GEEK featured. The wider Kaspa token ecosystem belongs here.** GEEK Wallet is a Kaspa wallet product; this public Alpha is its read-only portfolio companion for a Mainnet public address. [GEEK HQ](https://www.geekprotocol.xyz/) is the ecosystem learning product.
 
-Paste an address to read native KAS, available/locked GEEK and up to 20 recent native transactions. A receiving QR and copy action use that same public address. Tracking does not prove ownership and one address may cover only part of a wallet. No seed phrases, private keys, signing, sending, recovery or exchange are exposed by the public app.
+Paste an address to read native KAS first, featured GEEK, paginated KRC-20 holdings, experimental covenant-token snapshots and up to 20 recent native transactions. A receiving QR and copy action use that same public address. Tracking does not prove ownership and one address may cover only part of a wallet. No seed phrases, private keys, signing, sending, recovery or exchange are exposed by the public app.
 
 ## Data and privacy
 
-The server validates the address with the Kaspa SDK, then reads fixed Kaspa REST and Kasplex endpoints. The address is sent to those public services only after a lookup. Hosting and upstream services may log requests. No portfolio database or analytics is added. Nicknames and up to six addresses can be remembered in this browser when explicitly selected; Forget removes a remembered entry. The app does not read or delete earlier experimental encrypted wallet records.
+The server validates the address with the Kaspa SDK, then reads fixed Kaspa REST, Kasplex and kcc20.info endpoints. The address is sent to those public services only after a lookup. Hosting and upstream services may log requests. No portfolio database or analytics is added. Nicknames and up to six addresses can be remembered in this browser when explicitly selected; Forget removes a remembered entry. The app does not read or delete earlier experimental encrypted wallet records.
 
-Balances use integer base units and eight decimal places. Missing, malformed, oversized or failed responses show **Unavailable**, never an invented zero. GEEK uses Kasplex's specific-token balance endpoint (`/v1/krc20/address/{address}/token/GEEK`), documented in the [official SDK](https://github.com/kasplex/sdk-kiwi/blob/06dc75ea1066aba4d78eb32711690f6f123a9575/src/api/kasplexApi.ts). The token-list endpoint ignores a `tick` filter and paginates holdings, so its first page cannot establish a missing GEEK balance. A successful, complete empty result or an explicit zero GEEK balance reports zero. Kasplex also returns a no-record sentinel with zero balance, zero locked, zero decimals and zero operation score; only that exact zero case is accepted outside GEEK’s eight-decimal format. Wrong tokens, duplicate results, pagination cursors and invalid amounts are rejected. Native transaction acceptance is shown only when reported by the source. Prices and historical charts are unavailable; no mock values are shown.
+KAS and GEEK use integer base units and eight decimal places. Other KRC-20 tokens use their own validated precision from zero to eighteen decimals; issue-mode contract IDs remain distinct from tickers. Missing, malformed, oversized or failed responses show **Unavailable**, never an invented zero. GEEK uses Kasplex's specific-token balance endpoint (`/v1/krc20/address/{address}/token/GEEK`), documented in the [official SDK](https://github.com/kasplex/sdk-kiwi/blob/06dc75ea1066aba4d78eb32711690f6f123a9575/src/api/kasplexApi.ts). The token-list endpoint ignores a `tick` filter and paginates holdings, so its first page cannot establish a missing GEEK balance. A successful, complete empty result or an explicit zero GEEK balance reports zero. Kasplex also returns a no-record sentinel with zero balance, zero locked, zero decimals and zero operation score; only that exact zero case is accepted outside GEEK’s eight-decimal format. Wrong tokens, duplicate results, pagination cursors and invalid amounts are rejected. Native transaction acceptance is shown only when reported by the source. Prices and historical charts are unavailable; no mock values are shown.
+
+## Asset support and hierarchy
+
+KAS is the primary asset and pays native network fees. GEEK is featured second; it does not define the wallet's asset scope. KRC-20 and covenant tokens have separate views, sources and identities. Unlike asset quantities are never added together or turned into an invented fiat total.
+
+`/api/tokens` reads one bounded Kasplex holdings page at a time. The UI exposes Next page, Back to first page, per-page filtering and retry, and stops repeated cursors. Loaded pages are not represented as a complete wallet snapshot. Dedicated GEEK lookup remains independent of the holdings list.
+
+`/api/covenants` reads experimental Mainnet address analysis plus status from the [kcc20.info OpenAPI](https://kcc20.info/openapi.json). Its current profiles are **legacy-kcc20** and **kron-native**, displayed with those identities. They are not silently reclassified as conformance to the current KCC-20 proposal. Results are source-reported snapshots, not independently verified ownership or spendability. Unverified source balances are hidden; failed/stale/incomplete/unsupported responses are unavailable. An empty snapshot is not proof that the address has no covenant assets. Source lag and unresolved transitions are visible. See [asset support and integration boundaries](docs/asset-support.md).
+
+The official [KCC-20 specification](https://github.com/kaspanet/kccs/blob/main/kcc-0020.md) was in Last Call on 14 October 2026. Current-proposal ABI/state verification and generic KCC-20 signing remain future integration work. The public app exposes no signer for any asset.
 
 ## Understanding native activity
 
@@ -30,7 +40,7 @@ npm run dev
 npm run verify
 ```
 
-Tests cover checksum/network validation, exact amounts, malformed receipts, independent source failures, incoming/spending/change/shared-input cases, incomplete resolution, acceptance states, and rendered explanations. GitHub Actions runs tests, lint, type checks, the production build and a production dependency audit. Existing Vercel hosting remains in use. Browser and physical-phone interaction checks remain a separate acceptance step.
+Tests cover checksum/network validation, exact per-asset amounts, pagination, route parameter validation, independent source failures, covenant identity/profile/freshness checks, incoming/spending/change/shared-input cases, incomplete resolution, acceptance states, and rendered explanations. GitHub Actions runs tests, lint, type checks, the production build and a production dependency audit. Existing Vercel hosting remains in use. Browser and physical-phone interaction checks remain a separate acceptance step.
 
 ## Earlier prototype
 
