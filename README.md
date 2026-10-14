@@ -10,6 +10,16 @@ The server validates the address with the Kaspa SDK, then reads fixed Kaspa REST
 
 Balances use integer base units and eight decimal places. Missing, malformed, oversized or failed responses show **Unavailable**, never an invented zero. A successful complete empty token list can report zero GEEK. Native transaction acceptance is shown only when reported by the source. Prices and historical charts are unavailable; no mock values are shown.
 
+## Understanding native activity
+
+Each recent transaction opens a read-only explanation with the KAS asset and Mainnet network, exact input/output totals, tracked-address inputs and outputs, a net address change, full output destinations, source block time and transaction ID. Inputs can also be expanded. The list records when Kaspa REST was read and supports refresh and independent explorer links.
+
+The provider is asked to resolve previous outpoint addresses and amounts (`resolve_previous_outpoints=light`). Amount arithmetic uses `BigInt` in sompi (eight decimal places); unsafe numeric amounts are unavailable. Missing/invalid input or output amounts, duplicate or missing positions, unsupported addresses, contradictory totals, or incomplete resolution prevent the affected totals, net movement or fee from being claimed. A valid output can still be displayed when input resolution is missing. Empty inputs do not imply a zero fee, including transactions that create native coins.
+
+The whole transaction fee is all inputs minus all outputs. It is **not added again** to the net address decrease. Multiple input addresses do not establish which party paid the fee. The address change is outputs to the tracked address minus inputs from that address; it is not a complete wallet balance or necessarily a payment amount. Outputs to the tracked address may be change or a self-transfer. Other output addresses may also belong to the same wallet, so intended recipients and ownership are not inferred.
+
+Acceptance is reported as accepted, not accepted, or unavailable **by the source**. A false or missing acceptance value is not relabeled pending, failed, or paid. Native KAS receipts do not establish GEEK token transfers, mints, burns, HQ payouts or learning rewards. Those require separate token-operation evidence; this release adds no token activity feed, payment, signer, or payout authority.
+
 ## Development
 
 Node 20.9+:
@@ -20,7 +30,7 @@ npm run dev
 npm run verify
 ```
 
-Tests cover checksum/network validation, exact amounts, malformed receipts and independent source failures. GitHub Actions runs tests, lint, type checks and the production build. Existing Vercel hosting remains in use.
+Tests cover checksum/network validation, exact amounts, malformed receipts, independent source failures, incoming/spending/change/shared-input cases, incomplete resolution, acceptance states, and rendered explanations. GitHub Actions runs tests, lint, type checks, the production build and a production dependency audit. Existing Vercel hosting remains in use. Browser and physical-phone interaction checks remain a separate acceptance step.
 
 ## Earlier prototype
 
