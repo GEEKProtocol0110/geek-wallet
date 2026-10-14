@@ -17,12 +17,17 @@ export function parseKas(value:unknown,address:string):string {
 }
 export function parseGeek(value:unknown):{available:string;locked:string} {
  if(!value||typeof value!=='object')throw new Error('Invalid token balance');const v=value as Record<string,unknown>;
- if(v.message!=='successful'||!Array.isArray(v.result)||v.result.length>100)throw new Error('Invalid token balance');
- const matches=v.result.filter(row=>row&&typeof row==='object'&&String(row.tick).toUpperCase()==='GEEK');
- if(matches.length===0){if(v.next!==undefined&&v.next!==null&&v.next!=='')throw new Error('Incomplete token page');return {available:'0',locked:'0'};}
- if(matches.length!==1)throw new Error('Ambiguous token balance');const row=matches[0];
- if(String(row.dec)!=='8')throw new Error('Unexpected token decimals');
- return {available:baseUnits(row.balance),locked:baseUnits(row.locked)};
+ if(v.message!=='successful'||!Array.isArray(v.result)||v.result.length>1)throw new Error('Invalid token balance');
+ // This parser is for the specific-token endpoint, never a partial token list.
+ for(const cursor of [v.next,v.prev])if(cursor!==undefined&&cursor!==null&&cursor!=='')throw new Error('Incomplete token balance');
+ if(v.result.length===0)return {available:'0',locked:'0'};
+ const row=v.result[0];
+ if(!row||typeof row!=='object'||typeof row.tick!=='string'||row.tick.toUpperCase()!=='GEEK')throw new Error('Wrong token balance');
+ const available=baseUnits(row.balance),locked=baseUnits(row.locked);
+ // Kasplex returns this explicit sentinel when the address has no GEEK record.
+ const emptyRecord=String(row.dec)==='0'&&available==='0'&&locked==='0'&&String(row.opScoreMod)==='0';
+ if(String(row.dec)!=='8'&&!emptyRecord)throw new Error('Unexpected token decimals');
+ return {available,locked};
 }
 export function parseActivity(value:unknown,address:string):Activity[] {
  if(!Array.isArray(value)||value.length>20)throw new Error('Invalid activity');const seen=new Set<string>();
@@ -45,7 +50,7 @@ export async function loadPortfolio(raw:unknown,fetcher:typeof fetch=fetch):Prom
  }
  const [kas,geek,activity]=await Promise.all([
   read(`https://api.kaspa.org/addresses/${escaped}/balance`,v=>parseKas(v,address)),
-  read(`https://api.kasplex.org/v1/krc20/address/${address}/tokenlist?tick=GEEK`,parseGeek),
+  read(`https://api.kasplex.org/v1/krc20/address/${address}/token/GEEK`,parseGeek),
   read(`https://api.kaspa.org/addresses/${escaped}/full-transactions?limit=20&resolve_previous_outpoints=light`,v=>parseActivity(v,address))
  ]);
  return {address,network:'mainnet',kas,geek,activity};
