@@ -10,6 +10,8 @@ Product direction agreed on 14 October 2026: GEEK Wallet is a Kaspa wallet first
 | Covenant tokens | Experimental provider snapshots from kcc20.info | Provider profiles `legacy-kcc20` and `kron-native`, full token IDs and source validation labels |
 | Current KCC-20 proposal | Ecosystem target; universal conformance is not implemented | Requires versioned ABI/state and ownership validation before claiming proposal compatibility |
 
+Asset selection now controls history. The overview fetches balances only. KAS history loads on selection; GEEK and other mint-mode KRC-20 selections read separate validated Kasplex operations. Both initially display five records. Issue-mode and covenant history are explicitly unavailable; no KAS receipts are substituted. The separate Swap page discovers external KAS routes with ten major assets; it does not add multichain balances, signing, orders or GEEK exchange support. See the README for provider boundaries and remaining embedded-swap setup.
+
 ## Data boundaries
 
 Public source references reviewed on 14 October 2026:
