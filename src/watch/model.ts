@@ -7,10 +7,11 @@ import type {Reading} from './provider';
 import {parseTokenPage,tokenCursor} from './tokens';
 import type {TokenPage} from './tokens';
 import {readCovenants} from './covenants';
+import {parseTokenActivity,operationCursor,operationTicker} from './token-activity';
 export type {Reading} from './provider';
 export type {Activity} from './activity';
 export {baseUnits,displayUnits} from './amounts';
-export type Portfolio = {address:string;network:'mainnet';kas:Reading<string>;geek:Reading<{available:string;locked:string}>;activity:Reading<Activity[]>};
+export type Portfolio = {address:string;network:'mainnet';kas:Reading<string>;geek:Reading<{available:string;locked:string}>};
 export function normalizeAddress(raw: unknown): string {
  if(typeof raw!=='string' || raw.length>120) throw new Error('Enter a valid Kaspa Mainnet public address.');
  const value=raw.trim();if(value!==value.toLowerCase() && value!==value.toUpperCase()) throw new Error('Enter a valid Kaspa Mainnet public address.');
@@ -47,13 +48,24 @@ export async function loadTokens(raw:unknown,cursorValue:unknown=null,fetcher:ty
  return readSource(source,value=>{const page=parseTokenPage(value);if(cursor&&page.next===cursor)throw new Error('Repeated token cursor');return page;},fetcher);
 }
 export async function loadCovenants(raw:unknown,fetcher:typeof fetch=fetch){return readCovenants(normalizeAddress(raw),fetcher);}
+export async function loadActivity(raw:unknown,fetcher:typeof fetch=fetch):Promise<Reading<Activity[]>>{
+ const address=normalizeAddress(raw);
+ return readSource(`https://api.kaspa.org/addresses/${encodeURIComponent(address)}/full-transactions?limit=20&resolve_previous_outpoints=light`,v=>parseActivity(v,address),fetcher);
+}
+export async function loadTokenActivity(raw:unknown,ticker:unknown,cursorValue:unknown=null,fetcher:typeof fetch=fetch){
+ const address=normalizeAddress(raw),tick=operationTicker(ticker),cursor=operationCursor(cursorValue);
+ const params=new URLSearchParams({address,tick});if(cursor)params.set('next',cursor);
+ return readSource(`https://api.kasplex.org/v1/krc20/oplist?${params}`,v=>{
+  const page=parseTokenActivity(v,address,tick,normalizeAddress);
+  if(cursor&&page.next===cursor)throw new Error('Repeated operation cursor');return page;
+ },fetcher);
+}
 export async function loadPortfolio(raw:unknown,fetcher:typeof fetch=fetch):Promise<Portfolio> {
  const address=normalizeAddress(raw);const escaped=encodeURIComponent(address);
  const read=<T>(source:string,parse:(v:unknown)=>T)=>readSource(source,parse,fetcher);
- const [kas,geek,activity]=await Promise.all([
+ const [kas,geek]=await Promise.all([
   read(`https://api.kaspa.org/addresses/${escaped}/balance`,v=>parseKas(v,address)),
-  read(`https://api.kasplex.org/v1/krc20/address/${address}/token/GEEK`,parseGeek),
-  read(`https://api.kaspa.org/addresses/${escaped}/full-transactions?limit=20&resolve_previous_outpoints=light`,v=>parseActivity(v,address))
+  read(`https://api.kasplex.org/v1/krc20/address/${address}/token/GEEK`,parseGeek)
  ]);
- return {address,network:'mainnet',kas,geek,activity};
+ return {address,network:'mainnet',kas,geek};
 }
