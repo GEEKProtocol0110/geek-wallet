@@ -42,6 +42,12 @@ npm run verify
 
 Tests cover checksum/network validation, exact per-asset amounts, pagination, route parameter validation, independent source failures, covenant identity/profile/freshness checks, incoming/spending/change/shared-input cases, incomplete resolution, acceptance states, and rendered explanations. GitHub Actions runs tests, lint, type checks, the production build and a production dependency audit. Existing Vercel hosting remains in use. Browser and physical-phone interaction checks remain a separate acceptance step.
 
+### Link previews
+
+The canonical public URL is `https://wallet.geekprotocol.xyz/`. Static Open Graph and Twitter metadata use a branded 1200 × 630 PNG, with GEEK Protocol icons replacing the starter favicon. `npm run verify` also checks the built HTML for the canonical URL, share tags, image dimensions and icon links.
+
+The original protocol mark lives in `public/brand/`. Run `npm run assets:share` to regenerate the committed share SVG/PNG and app icons; this uses Sharp from Next.js and local Arial/Helvetica-compatible fonts. Commit the resulting assets so production does not depend on image generation or runtime fonts. Use a new image filename and update the metadata/check when replacing a published card, because sharing services can cache earlier previews. A fresh Messenger preview still requires a check in Messenger.
+
 ## Earlier prototype
 
 `legacy-wallet/` preserves the former create/restore/signing prototype as reference, excluded from the public build. It is not an audited wallet and its previous production-ready claims do not describe this release. Do not use its key handling or mock provider fallbacks with funds. The active app intentionally accepts public addresses only.
