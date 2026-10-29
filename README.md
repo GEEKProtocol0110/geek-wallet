@@ -66,6 +66,6 @@ The original protocol mark lives in `public/brand/`. Run `npm run assets:share` 
 
 ## Earlier prototype
 
-`legacy-wallet/` preserves the former create/restore/signing prototype as reference, excluded from the public build. It is not an audited wallet and its previous production-ready claims do not describe this release. Do not use its key handling or mock provider fallbacks with funds. The active app intentionally accepts public addresses only.
+The former create/restore/signing prototype (`legacy-wallet/`) has been removed because its key handling was unsafe (password-derived CryptoJS AES keys, mnemonics in localStorage, unsalted SHA-256 password hashing). The active app intentionally accepts public addresses only.
 
 Primary API implementation references: [Kaspa REST server](https://github.com/kaspa-ng/kaspa-rest-server), [Kasplex indexer](https://api.kasplex.org/), [Kaspa SDK](https://github.com/kaspanet/rusty-kaspa).
